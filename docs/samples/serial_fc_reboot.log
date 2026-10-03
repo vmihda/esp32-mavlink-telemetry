@@ -1,0 +1,33 @@
+[boot] ESP32 MAVLink telemetry companion
+[fs] LittleFS 380928 / 2490368 bytes used
+[event] 403 BOOT boot #17, reset reason POWERON
+[mav] UART2 115200 baud, RX=GPIO16 TX=GPIO17
+[wifi] AP "ESP32-Telemetry" (password "telemetry123") -> http://192.168.4.1/
+[wifi] mDNS http://telemetry.local/
+[event] 962 LINK_UP sys=1 comp=1 baud=115200 pins=straight
+[log] writing /log_00017_01.csv
+[status] link=CONNECTED lost=0 baud=115200 pkts=49 err=0 rows=2 | STABILIZE disarmed | 0.01V 72% | alt -4.0m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=208348
+[status] link=CONNECTED lost=0 baud=115200 pkts=99 err=0 rows=6 | STABILIZE disarmed | 0.01V 72% | alt -3.8m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=207852
+[status] link=CONNECTED lost=0 baud=115200 pkts=149 err=0 rows=10 | STABILIZE disarmed | 0.01V 72% | alt -4.3m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=207852
+[event] 6663 FC_TEXT sev=2 PreArm: Motors: Check frame class and type
+[status] link=CONNECTED lost=0 baud=115200 pkts=201 err=0 rows=14 | STABILIZE disarmed | 0.01V 71% | alt -3.7m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=203376
+[status] link=CONNECTED lost=0 baud=115200 pkts=238 err=0 rows=18 | STABILIZE disarmed | 0.01V 71% | alt -3.6m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=203376
+[event] 11966 LINK_LOST no heartbeat for 3000 ms
+[status] link=LOST lost=1 baud=115200 pkts=238 err=0 rows=22 | 0.01V 71% | alt -3.6m | r3 p-9 y0 | stack mav=6096 log=4700 loop=6204 heap=203376
+[event] 14679 LINK_RESTORED after 2712 ms, lost #1
+[event] 14768 FC_TEXT sev=6 Initialising ArduPilot
+[status] link=CONNECTED lost=1 baud=115200 pkts=250 err=0 rows=25 | STABILIZE disarmed | 0.01V 71% | alt -3.6m | r3 p-9 y0 | stack mav=5936 log=4700 loop=6204 heap=203376
+[event] 16303 FC_TEXT sev=6 Calibrating barometer
+[event] 17920 FC_TEXT sev=6 Barometer 1 calibration complete
+[status] link=CONNECTED lost=1 baud=115200 pkts=259 err=0 rows=28 | STABILIZE disarmed | 0.01V 71% | alt -3.6m | r3 p-9 y0 | stack mav=5936 log=4700 loop=6204 heap=203376
+[event] 18578 FC_TEXT sev=6 ArduPilot Ready
+[event] 18579 FC_TEXT sev=6 AHRS: DCM active
+[event] 18582 FC_TEXT sev=6 RCOut: PWM:1-8 NeoP:9
+[status] link=CONNECTED lost=1 baud=115200 pkts=307 err=0 rows=32 | STABILIZE disarmed | 0.01V 99% | alt 0.4m | r3 p-9 y-0 | stack mav=5936 log=4700 loop=6204 heap=203376
+[event] 20580 FC_TEXT sev=6 EKF3 IMU0 initialised
+[event] 20585 FC_TEXT sev=6 AHRS: EKF3 active
+[event] 21894 FC_TEXT sev=6 EKF3 IMU0 tilt alignment complete
+[status] link=CONNECTED lost=1 baud=115200 pkts=360 err=0 rows=36 | STABILIZE disarmed | 0.01V 99% | alt 0.2m | r3 p-9 y0 | stack mav=5936 log=4700 loop=6204 heap=203344
+[status] link=CONNECTED lost=1 baud=115200 pkts=410 err=0 rows=40 | STABILIZE disarmed | 0.01V 99% | alt 1.2m | r3 p-9 y0 | stack mav=5936 log=4700 loop=6204 heap=203344
+[status] link=CONNECTED lost=1 baud=115200 pkts=460 err=0 rows=44 | STABILIZE disarmed | 0.01V 98% | alt 1.0m | r3 p-9 y-0 | stack mav=5936 log=4700 loop=6204 heap=203344
+[status] link=CONNECTED lost=1 baud=115200 pkts=510 err=0 rows=48 | STABILIZE disarmed | 0.01V 98% | alt 1.1m | r3 p-9 y-0 | stack mav=5936 log=4700 loop=6204 heap=203344

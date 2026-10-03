@@ -1,0 +1,7 @@
+# Name,   Type, SubType,  Offset,   Size
+# No OTA: 1.5 MB app, 64 KB core dump, ~2.3 MB LittleFS for telemetry logs
+nvs,      data, nvs,      0x9000,   0x5000
+phy_init, data, phy,      0xe000,   0x1000
+factory,  app,  factory,  0x10000,  0x180000
+coredump, data, coredump, 0x190000, 0x10000
+spiffs,   data, spiffs,   0x1A0000, 0x260000
