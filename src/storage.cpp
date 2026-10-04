@@ -129,15 +129,20 @@ private:
     }
 
     // Deletes the oldest telemetry logs (never the active one) when the FS fills up.
+    // Bounded: a failed remove must not spin until the task watchdog fires.
     void ensureFreeSpace() {
-        for (;;) {
-            const size_t freeBytes = LittleFS.totalBytes() - LittleFS.usedBytes();
-            if (freeBytes >= cfg::FS_MIN_FREE_BYTES) return;
-            std::vector<String> logs = listLogFiles();
-            if (logs.empty() || logs.front() == gActiveFile) return;
-            Serial.printf("[log] low space (%u B free), deleting %s\n",
-                          static_cast<unsigned>(freeBytes), logs.front().c_str());
-            LittleFS.remove(logs.front());
+        const size_t freeBytes = LittleFS.totalBytes() - LittleFS.usedBytes();
+        if (freeBytes >= cfg::FS_MIN_FREE_BYTES) return;
+        // The active file is skipped, not treated as the end of the list: after an
+        // NVS reset its boot number restarts and it may sort before older logs.
+        for (const String& name : listLogFiles()) {
+            if (name == gActiveFile) continue;
+            Serial.printf("[log] low space, deleting %s\n", name.c_str());
+            if (!LittleFS.remove(name)) {
+                Serial.printf("[log] cannot delete %s\n", name.c_str());
+                return;
+            }
+            if (LittleFS.totalBytes() - LittleFS.usedBytes() >= cfg::FS_MIN_FREE_BYTES) return;
         }
     }
 
