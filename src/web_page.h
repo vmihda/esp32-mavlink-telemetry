@@ -33,8 +33,11 @@ td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--muted);font-weight:600;font-size:12px}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
 a,button{color:var(--acc)}
-button{background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;font:inherit}
+button,.btn{display:inline-block;background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;font:inherit;text-decoration:none}
 button.del{color:var(--bad)}
+.stale .tile b{opacity:.4}
+#stale{color:var(--warn);font-size:12px;margin:-8px 0 12px}
+#msg{color:var(--bad);font-size:12px}
 .active{font-size:11px;color:var(--ok);margin-left:6px}
 pre{margin:8px 0 0;max-height:320px;overflow:auto;font-size:12px;background:var(--bg);padding:8px;border-radius:6px}
 #text{color:var(--muted);font-size:12px;margin:-8px 0 16px}
@@ -48,11 +51,13 @@ pre{margin:8px 0 0;max-height:320px;overflow:auto;font-size:12px;background:var(
   <span id="link" class="pill WAITING">WAITING</span>
   <span class="meta" id="meta"></span>
 </header>
-<div class="grid" id="tiles"></div>
+<div class="grid stale" id="tiles"></div>
+<div id="stale" hidden></div>
 <div id="text"></div>
 <section>
   <h2>Log files</h2>
   <div class="meta" id="fs"></div>
+  <div id="msg" role="status"></div>
   <div class="wrap"><table>
     <thead><tr><th>File</th><th class="n">Size</th><th></th></tr></thead>
     <tbody id="files"></tbody>
@@ -62,9 +67,17 @@ pre{margin:8px 0 0;max-height:320px;overflow:auto;font-size:12px;background:var(
 </main>
 <script>
 const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const fmt=(v,d=1,u='')=>v===null||v===undefined?'—':(typeof v==='number'?v.toFixed(d):v)+u;
 const kb=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';
 const FIX=['no GPS','no fix','2D','3D','DGPS','RTK float','RTK fixed','static','PPP'];
+// The ESP web server handles one request at a time (and blocks while streaming
+// a file), so every request has a timeout and polling never overlaps.
+async function req(url,opt={}){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),4000);
+  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'});}
+  finally{clearTimeout(t);}
+}
 function tiles(t){
   const rows=[
     ['Mode',t.mode??'—'],['Armed',t.armed===null?'—':(t.armed?'ARMED':'disarmed')],
@@ -78,38 +91,69 @@ function tiles(t){
     ['Roll / Pitch',t.roll===null?'—':t.roll.toFixed(1)+'° / '+t.pitch.toFixed(1)+'°'],['Yaw',fmt(t.yaw,1,'°')],
     ['UTC',t.utc||'—'],
   ];
-  $('tiles').innerHTML=rows.map(([k,v])=>`<div class="tile"><span>${k}</span><b title="${v}">${v}</b></div>`).join('');
+  $('tiles').innerHTML=rows.map(([k,v])=>`<div class="tile"><span>${k}</span><b title="${esc(v)}">${esc(v)}</b></div>`).join('');
+}
+// Values stay on screen after the link drops; they are dimmed and labelled as old.
+function stale(note){
+  $('tiles').classList.toggle('stale',!!note);
+  $('stale').hidden=!note;$('stale').textContent=note||'';
 }
 async function status(){
   try{
-    const s=await (await fetch('/api/status')).json();
+    const r=await req('/api/status');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const s=await r.json();
     const l=$('link');l.textContent=s.link;l.className='pill '+s.link;
     $('meta').textContent=`boot #${s.boot} · up ${Math.round(s.uptime_ms/1000)} s · ${s.baud} baud${s.swapped?" (RX/TX swapped)":""} · ${s.rx_packets} pkts · lost ${s.lost_count}× · rows ${s.rows}`;
     tiles(s.t);
+    stale(s.link==='CONNECTED'?'':s.link==='LOST'?'No heartbeat from the flight controller: last received values, not live':'Waiting for the flight controller');
     $('text').textContent=s.t.status_text?('FC: '+s.t.status_text):'';
     $('fs').textContent=`LittleFS: ${kb(s.fs_used)} / ${kb(s.fs_total)} · writing ${s.active_file||'— (waiting for FC)'}`;
-  }catch(e){const l=$('link');l.textContent='ESP OFFLINE';l.className='pill LOST';}
+  }catch(e){
+    const l=$('link');l.textContent='ESP OFFLINE';l.className='pill LOST';
+    stale('No response from the ESP: last received values, not live');
+  }
+  setTimeout(status,1000);
 }
-async function files(){
-  const r=await (await fetch('/api/files')).json();
-  $('files').innerHTML=r.files.map(f=>{
-    const n=encodeURIComponent(f.name);
-    return `<tr><td><a href="/download?file=${n}">${f.name}</a>${f.active?'<span class="active">● writing</span>':''}</td>
+let shown=null;
+async function loadFiles(){
+  try{
+    const r=await req('/api/files');
+    if(!r.ok)return;
+    const {files}=await r.json();
+    $('files').innerHTML=files.map(f=>{
+      const n=encodeURIComponent(f.name),a=esc(f.name);
+      return `<tr><td><a href="/download?file=${n}" download>${a}</a>${f.active?'<span class="active">● writing</span>':''}</td>
 <td class="n">${kb(f.size)}</td>
-<td class="n"><button onclick="preview('${n}')">view</button> <a href="/download?file=${n}"><button>download</button></a>
-${f.active?'':`<button class="del" onclick="del('${n}')">delete</button>`}</td></tr>`}).join('');
+<td class="n"><button data-act="view" data-n="${n}">view</button> <a class="btn" href="/download?file=${n}" download>download</a>
+${f.active?'':`<button class="del" data-act="del" data-n="${n}">delete</button>`}</td></tr>`}).join('');
+  }catch(e){}  // keep the last list while the ESP is unreachable
 }
+async function pollFiles(){await loadFiles();setTimeout(pollFiles,10000);}
 async function preview(n){
-  const p=$('preview');p.hidden=false;p.textContent='loading…';
-  p.textContent=await (await fetch('/view?file='+n)).text();
+  const p=$('preview');p.hidden=false;p.textContent='loading…';shown=n;
+  try{
+    const r=await req('/view?file='+n);
+    p.textContent=await r.text();
+  }catch(e){p.textContent='cannot load '+decodeURIComponent(n);}
 }
 async function del(n){
-  const r=await fetch('/delete?file='+n,{method:'POST'});
-  if(!r.ok)$('preview').textContent=await r.text();
-  files();
+  const name=decodeURIComponent(n);
+  if(!confirm('Delete '+name+'?'))return;
+  $('msg').textContent='';
+  try{
+    const r=await req('/delete?file='+n,{method:'POST'});
+    if(!r.ok)$('msg').textContent=`Cannot delete ${name}: ${await r.text()}`;
+    else if(shown===n){$('preview').hidden=true;shown=null;}
+  }catch(e){$('msg').textContent=`Cannot delete ${name}: no response from the ESP`;}
+  loadFiles();
 }
-status();files();
-setInterval(status,1000);setInterval(files,10000);
+$('files').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-act]');
+  if(!b)return;
+  if(b.dataset.act==='view')preview(b.dataset.n);else del(b.dataset.n);
+});
+status();pollFiles();
 </script>
 </body>
 </html>
