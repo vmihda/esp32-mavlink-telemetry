@@ -113,11 +113,11 @@ ESP32 піднімає точку доступу Wi-Fi:
 | Вебінтерфейс | перегляд, завантаження і видалення файлів перевірені з телефона |
 | Пам'ять | мінімальний вільний стек задач від 4,7 до 6,0 KB з 8 KB, вільна купа не менше 199 KB |
 
-Реальні дані з цього FC лежать у [docs/samples](docs/samples):
+Реальні дані з цього FC лежать у [samples](samples):
 
-- [telemetry_fc_reboot.csv](docs/samples/telemetry_fc_reboot.csv): лог телеметрії з перезавантаженням FC посередині запису
-- [events.csv](docs/samples/events.csv): журнал подій
-- [serial_fc_reboot.log](docs/samples/serial_fc_reboot.log): консоль ESP під час перезавантаження FC
+- [telemetry_fc_reboot.csv](samples/telemetry_fc_reboot.csv): лог телеметрії з перезавантаженням FC посередині запису
+- [events.csv](samples/events.csv): журнал подій
+- [serial_fc_reboot.log](samples/serial_fc_reboot.log): консоль ESP під час перезавантаження FC
 
 ## Тести
 
@@ -136,5 +136,5 @@ src/
 lib/telemetry/src/     декодер MAVLink, монітор зв'язку, формат CSV (без залежності від Arduino)
 test/                  unit-тести для lib/telemetry
 partitions.csv         розділи флешу: застосунок 1,5 MB, coredump 64 KB, LittleFS 2,4 MB
-docs/samples/          дані, записані на реальному FC
+samples/               дані, записані на реальному FC
 ```
